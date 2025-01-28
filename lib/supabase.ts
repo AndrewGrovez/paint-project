@@ -1,26 +1,25 @@
-// lib/supabase.ts
-import { createBrowserClient, createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
+export const createClient2 = () => {
+  const cookieStore = cookies();
 
-export function createServerComponentClient() {
-  const cookieStore = cookies()
-  
-  return createServerClient(
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+      auth: {
+        flowType: 'pkce',
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: true,
+        storageKey: 'sb-session'
+      },
+      global: {
+        headers: {
+          'Cookie': cookieStore.toString()
         }
       }
     }
-  )
-}
+  );
+};
