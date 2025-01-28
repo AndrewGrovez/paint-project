@@ -5,6 +5,35 @@ const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY!;
 const SECRET_KEY = process.env.AMAZON_SECRET_KEY!;
 const PARTNER_TAG = process.env.AMAZON_PARTNER_TAG!;
 
+interface AmazonItem {
+    ASIN: string;
+    ItemInfo?: {
+        Title?: {
+            DisplayValue?: string;
+        };
+    };
+    Images?: {
+        Primary?: {
+            Medium?: {
+                URL?: string;
+            };
+        };
+    };
+    Offers?: {
+        Listings?: Array<{
+            Price?: {
+                Amount?: number;
+            };
+        }>;
+    };
+}
+
+interface AmazonResponse {
+    ItemsResult: {
+        Items: AmazonItem[];
+    };
+}
+
 function sign(key: Buffer | Uint8Array, msg: string): Buffer {
     return crypto.createHmac('sha256', key).update(msg).digest();
 }
@@ -14,8 +43,7 @@ async function getProductPrices(asins: string[]) {
     const region = 'eu-west-1';
     const service = 'ProductAdvertisingAPI';
 
-    // Function to process a batch of ASINs
-    async function processBatch(batchAsins: string[]) {
+    async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
         const amzdate = new Date().toISOString().replace(/[:\-]|\.\d{3}/g, '');
         const datestamp = amzdate.slice(0, 8);
 
@@ -63,10 +91,10 @@ async function getProductPrices(asins: string[]) {
         ].join('\n');
 
         let k: Buffer | Uint8Array = Buffer.from(`AWS4${SECRET_KEY}`);
-k = sign(k, datestamp);
-k = sign(k, region);
-k = sign(k, service);
-k = sign(k, 'aws4_request');
+        k = sign(k, datestamp);
+        k = sign(k, region);
+        k = sign(k, service);
+        k = sign(k, 'aws4_request');
         const signature = sign(k, string_to_sign).toString('hex');
 
         const authorization_header = [
@@ -101,7 +129,11 @@ k = sign(k, 'aws4_request');
 
     // Process ASINs in batches of 10
     const batchSize = 10;
-    let allResults = { ItemsResult: { Items: [] } };
+    const allResults: AmazonResponse = {
+        ItemsResult: {
+            Items: []
+        }
+    };
 
     for (let i = 0; i < asins.length; i += batchSize) {
         const batchAsins = asins.slice(i, i + batchSize);
@@ -190,7 +222,13 @@ export async function GET() {
         const data = await getProductPrices(productIds);
         console.log('Amazon API Response:', JSON.stringify(data, null, 2));
 
-        const prices: Record<string, any> = {};
+        const prices: Record<string, {
+            currentPrice: number;
+            previousPrice: number;
+            lastUpdated: string;
+            title: string;
+            imageUrl: string;
+        }> = {};
 
         if (data.ItemsResult?.Items) {
             for (const item of data.ItemsResult.Items) {
