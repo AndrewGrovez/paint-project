@@ -1,6 +1,14 @@
-// app/api/check-prices/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+
+// Define interfaces
+interface PriceData {
+    currentPrice: number;
+}
+
+interface Prices {
+    [productId: string]: PriceData;
+}
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -49,10 +57,10 @@ async function createPriceAlert(productId: string, oldPrice: number, newPrice: n
 
 export async function POST(req: Request) {
     try {
-        const { prices } = await req.json();
+        const { prices }: { prices: Prices } = await req.json();
 
         for (const [productId, priceData] of Object.entries(prices)) {
-            const currentPrice = (priceData as any).currentPrice;
+            const currentPrice = priceData.currentPrice;
             
             if (currentPrice) {
                 // Get the last recorded price
