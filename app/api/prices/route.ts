@@ -5,7 +5,7 @@ const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY!;
 const SECRET_KEY = process.env.AMAZON_SECRET_KEY!;
 const PARTNER_TAG = process.env.AMAZON_PARTNER_TAG!;
 
-function sign(key: Buffer, msg: string) {
+function sign(key: Buffer | Uint8Array, msg: string): Buffer {
     return crypto.createHmac('sha256', key).update(msg).digest();
 }
 
@@ -62,11 +62,11 @@ async function getProductPrices(asins: string[]) {
             crypto.createHash('sha256').update(canonical_request).digest('hex')
         ].join('\n');
 
-        let k = Buffer.from(`AWS4${SECRET_KEY}`);
-        k = sign(k, datestamp);
-        k = sign(k, region);
-        k = sign(k, service);
-        k = sign(k, 'aws4_request');
+        let k: Buffer | Uint8Array = Buffer.from(`AWS4${SECRET_KEY}`);
+k = sign(k, datestamp);
+k = sign(k, region);
+k = sign(k, service);
+k = sign(k, 'aws4_request');
         const signature = sign(k, string_to_sign).toString('hex');
 
         const authorization_header = [
