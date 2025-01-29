@@ -27,7 +27,7 @@ export default function Home() {
             previousPrice: 52.99,
             brand: "Dulux",
             savings: "13%",
-            imageUrl: "/images/dulux trade diamond matt.jpg"
+            imageUrl: "/images/Dulux Trade Diamond Matt.jpg"
         },
         {
             id: "example2",
