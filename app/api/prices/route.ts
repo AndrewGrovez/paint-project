@@ -182,7 +182,7 @@ export async function GET() {
             "B0CP69VSW7", // Johnstone's Guard Durable
             "B00OKCWT30", // Johnstone's Water-Based Satin
             "B08LTW293L", // Crown Extreme Inhibiting
-            "B0D9LS2K37", // Crown Covermatt
+            "B08LTRLF6F", // Crown Covermatt
             "B08KWBQY9R", // Crown Vinyl Matt
             "B08KW8KN3L", // Crown Gloss
             "B07J66BVWF", // Crown Fastflow Satin

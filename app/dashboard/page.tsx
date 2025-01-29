@@ -178,17 +178,17 @@ const PAINT_PRODUCTS: Product[] = [
         ]
     },
     {
-        id: "B0D9LS2K37",
+        id: "B08LTRLF6F",
         title: "Crown Trade Covermatt Obliterating Emulsion",
-        subtitle: "White (5 litre)",
+        subtitle: "White (10 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Covermatt-Obliterating-Emulsion/dp/B0D9LS2K37",
+        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Covermatt-Obliterating-Emulsion/dp/B08LTRLF6F",
         features: [
             "High opacity coverage",
             "Matt emulsion",
             "Stain-blocking",
-            "5 litre capacity"
+            "10 litre capacity"
         ]
     },
     {
