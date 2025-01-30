@@ -29,7 +29,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Extreme-Resistant-Scrubbable/dp/B08BK4VLC7",
+        amazonUrl: "https://amzn.to/40FCMn8",
         features: [
             "Scrubbable and washable",
             "Extreme durability",
@@ -43,7 +43,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/5LTR-JOHNSTONES-COVAPLUS-EMULSION-BRILLIANT/dp/B005QWB23Q",
+        amazonUrl: "https://amzn.to/3PXX8TC",
         features: [
             "5 litre capacity",
             "Emulsion finish",
@@ -57,7 +57,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (2.5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/2-5LTR-JOHNSTONES-VINYL-BRILLIANT-WHITE/dp/B005Q7BC90",
+        amazonUrl: "https://amzn.to/3Cx2L8n",
         features: [
             "2.5 litre capacity",
             "Vinyl matt finish",
@@ -71,7 +71,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (2.5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/2-5LTR-JOHNSTONES-TRADE-UNDERCOAT-BRILLIANT/dp/B005QWAI68",
+        amazonUrl: "https://amzn.to/3CvySVQ",
         features: [
             "2.5 litre capacity",
             "Professional undercoat",
@@ -85,7 +85,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Trade-Guard-Durable-Brilliant/dp/B0CP69VSW7",
+        amazonUrl: "https://amzn.to/3CCybdm",
         features: [
             "Mould-resistant",
             "Durable finish",
@@ -99,7 +99,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Trade-Water-Based-Satin/dp/B00OKCWT30",
+        amazonUrl: "https://amzn.to/3CvEfVe",
         features: [
             "Water-based formula",
             "Satin finish",
@@ -113,7 +113,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Trade-Jonmat-Premium-Contract/dp/B0CP6BZQ22",
+        amazonUrl: "https://amzn.to/40DvVdP",
         features: [
             "Premium contract matt",
             "High coverage",
@@ -127,7 +127,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/5LTR-JOHNSTONES-ACRYLIC-EGGSHELL-BRILLIANT/dp/B005QWB7XQ",
+        amazonUrl: "https://amzn.to/40B1ViT",
         features: [
             "Acrylic eggshell finish",
             "Washable",
@@ -141,7 +141,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Trade-Guard-Brilliant-J-435197/dp/B08PMCPR4B",
+        amazonUrl: "https://amzn.to/3PWtqhP",
         features: [
             "Anti-mould protection",
             "Matt finish",
@@ -155,7 +155,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Trade-Water-Based-Gloss/dp/B0CPJD1WCF",
+        amazonUrl: "https://amzn.to/3PZ31A9",
         features: [
             "Water-based gloss",
             "Quick-drying",
@@ -169,7 +169,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Extreme-Inhibiting-Matt-5/dp/B08LTW293L",
+        amazonUrl: "https://amzn.to/3Cx2Ngv",
         features: [
             "Rust-inhibiting formula",
             "Matt finish",
@@ -183,7 +183,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (10 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Covermatt-Obliterating-Emulsion/dp/B08LTRLF6F",
+        amazonUrl: "https://amzn.to/3Cvz3R0",
         features: [
             "High opacity coverage",
             "Matt emulsion",
@@ -197,7 +197,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (7.5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Vinyl-Matt-White-7-5L/dp/B08KWBQY9R",
+        amazonUrl: "https://amzn.to/4hx7LbV",
         features: [
             "Vinyl matt finish",
             "7.5 litre capacity",
@@ -210,8 +210,8 @@ const PAINT_PRODUCTS: Product[] = [
         title: "Crown Trade Gloss",
         subtitle: "Brilliant White (5 litre)",
         brand: "Crown",
-        category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Gloss-Brilliant-White/dp/B08KW8KN3L",
+        category: "Interior & Exterior Paint",
+        amazonUrl: "https://amzn.to/3PTojz9",
         features: [
             "High gloss finish",
             "5 litre capacity",
@@ -225,7 +225,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Fastflow-White-Satin/dp/B07J66BVWF",
+        amazonUrl: "https://amzn.to/4giFWmH",
         features: [
             "Fast-drying formula",
             "Satin finish",
@@ -239,7 +239,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Fastflow-Interior-Exterior/dp/B08DRDMTZ9",
+        amazonUrl: "https://amzn.to/3Cv8208",
         features: [
             "Dual-purpose paint",
             "Quick-drying",
@@ -252,8 +252,8 @@ const PAINT_PRODUCTS: Product[] = [
         title: "Crown Trade Fastflow Primer Undercoat",
         subtitle: "White (5 litre)",
         brand: "Crown",
-        category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Fastflow-Primer-Undercoat/dp/B0D2Y2PBJ4",
+        category: "Primer Paint",
+        amazonUrl: "https://amzn.to/3WDccd8",
         features: [
             "Primer-undercoat combo",
             "Fast-drying",
@@ -267,7 +267,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Acrylic-Drying-Eggshell/dp/B00CITDGOI",
+        amazonUrl: "https://amzn.to/3WB1C6s",
         features: [
             "Acrylic eggshell",
             "Quick-drying",
@@ -281,7 +281,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Crown-Trade-Purpose-Primer-White/dp/B08LTQCVL1",
+        amazonUrl: "https://amzn.to/4hv6GC1",
         features: [
             "Multi-surface primer",
             "5 litre capacity",
@@ -295,7 +295,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/CrownTrade-Crown-Trade-Eggshell-White/dp/B08KW9JWLX",
+        amazonUrl: "https://amzn.to/3WCQKVL",
         features: [
             "Eggshell finish",
             "5 litre capacity",
@@ -309,7 +309,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (2.5 litre)",
         brand: "Crown",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Steracryl-Inhibiting-Acrylic-Eggshell-White-2-5/dp/B08LTVDK6N",
+        amazonUrl: "https://amzn.to/4aBILxM",
         features: [
             "Rust-inhibiting",
             "Acrylic eggshell",
@@ -323,7 +323,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Perfect-Matt-Johnstones-Brilliant-White/dp/B098JTHMYY",
+        amazonUrl: "https://amzn.to/4hvPoE4",
         features: [
             "Ultra-matt finish",
             "Stain-resistant",
@@ -337,7 +337,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Johnstones-Stain-Away-Matt-5L/dp/B07L8LX6FL",
+        amazonUrl: "https://amzn.to/4hCBS1w",
         features: [
             "Stain-repellent technology",
             "Matt finish",
@@ -351,7 +351,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Diamond-Brilliant-White/dp/B007ZU78JO",
+        amazonUrl: "https://amzn.to/4aUQszD",
         features: [
             "Diamond quality",
             "Matt finish",
@@ -365,7 +365,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "White (5 litre)",
         brand: "Johnstone's",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/5LTR-JOHNSTONES-ACRYLIC-EMULSION-BRILLIANT/dp/B005QWBAQ0",
+        amazonUrl: "https://amzn.to/3EqyqJ0",
         features: [
             "Trade quality",
             "Acrylic matt finish",
@@ -379,7 +379,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Special Value White (10 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Vinyl-Special-Value/dp/B08FDN5WD5",
+        amazonUrl: "https://amzn.to/40wayey",
         features: [
             "Professional trade paint",
             "Matt finish",
@@ -393,7 +393,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Diamond-Satinwood-Brilliant/dp/B07N2T83TQ",
+        amazonUrl: "https://amzn.to/4geyyJ7",
         features: [
             "Diamond quality",
             "Satinwood finish",
@@ -407,7 +407,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Interior Paint (10 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Super-Matt-Interior-Paint/dp/B08FDP4GHW",
+        amazonUrl: "https://amzn.to/3WHsQsi",
         features: [
             "Super matt finish",
             "Interior use",
@@ -421,7 +421,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Quick-Satinwood-Paint/dp/B07K6S3QKR",
+        amazonUrl: "https://amzn.to/40AZZHc",
         features: [
             "Quick drying formula",
             "Satinwood finish",
@@ -435,7 +435,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Gloss-Brilliant-White/dp/B007ZU77VS",
+        amazonUrl: "https://amzn.to/4aF8SnR",
         features: [
             "High gloss finish",
             "Trade quality",
@@ -449,7 +449,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Diamond-Eggshell-Brilliant/dp/B007ZU77EA",
+        amazonUrl: "https://amzn.to/4hEaUH7",
         features: [
             "Diamond quality",
             "Eggshell finish",
@@ -463,7 +463,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Mouldshield-Fungicidal-Brilliant/dp/B00EJFDXUQ",
+        amazonUrl: "https://amzn.to/4aEL5nV",
         features: [
             "Fungicidal protection",
             "Matt finish",
@@ -476,8 +476,8 @@ const PAINT_PRODUCTS: Product[] = [
         title: "Dulux Trade Undercoat",
         subtitle: "White (2.5 litre)",
         brand: "Dulux",
-        category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Undercoat-White-2-5L/dp/B00EJDZYYQ",
+        category: "Undercoat Paint",
+        amazonUrl: "https://amzn.to/3WDFIj0",
         features: [
             "Professional undercoat",
             "2.5 litre capacity",
@@ -491,7 +491,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Quick-Dry-Gloss/dp/B07K496P7Z",
+        amazonUrl: "https://amzn.to/4aCmsIq",
         features: [
             "Quick drying formula",
             "Gloss finish",
@@ -505,7 +505,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Durable-Flat-White/dp/B00EJF8GEO",
+        amazonUrl: "https://amzn.to/4aAwuKd",
         features: [
             "Durable formula",
             "Flat matt finish",
@@ -519,7 +519,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "WRX Trade",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/WRX-Trade-Satinwood-Paint-Brilliant/dp/B08W2FN211",
+        amazonUrl: "https://amzn.to/3PWMMna",
         features: [
             "Satinwood finish",
             "High gloss durability",
@@ -533,7 +533,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (2.5 litre)",
         brand: "WRX Trade",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/WRX-Trade-Satinwood-Paint-Brilliant/dp/B08W264522",
+        amazonUrl: "https://amzn.to/40WOTxK",
         features: [
             "Satinwood finish",
             "2.5 litre capacity",
@@ -547,7 +547,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "WRX Trade",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/WRX-Trade-Gloss-Paint-Brilliant/dp/B0CK7BQQJB",
+        amazonUrl: "https://amzn.to/40QHShQ",
         features: [
             "Gloss finish",
             "High shine",
@@ -561,7 +561,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Bathrooms & Kitchens (High Traffic)",
         brand: "Generic",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Eggshell-Interior-Bathrooms-Kitchens-Traffic/dp/B091273N26",
+        amazonUrl: "https://amzn.to/42ADwMR",
         features: [
             "Eggshell finish",
             "High-traffic resistance",
@@ -575,7 +575,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Transparent (1 litre)",
         brand: "TIKKURILA",
         category: "Specialty Paint",
-        amazonUrl: "https://www.amazon.co.uk/Sauna-Wax-TIKKURILA-SUPI-Transparent/dp/B077B38Q86",
+        amazonUrl: "https://amzn.to/42D7PTd",
         features: [
             "Sauna protection",
             "Transparent finish",
@@ -589,7 +589,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Brilliant White (5 litre)",
         brand: "Generic",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Trade-Ceiling-Paint-Brilliant-White/dp/B08W1PFSS2",
+        amazonUrl: "https://amzn.to/42vBGgt",
         features: [
             "Ceiling-specific formula",
             "Matt finish",
@@ -603,7 +603,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Water-Based (1 litre)",
         brand: "TIKKURILA",
         category: "Furniture Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Helmi-Performance-Furniture-Water-Based/dp/B0B152GYKK",
+        amazonUrl: "https://amzn.to/3CiVU2n",
         features: [
             "Water-based formula",
             "Furniture & cabinetry",
@@ -617,7 +617,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "5 Litre",
         brand: "Farrow & Ball",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Farrow-Ball-Estate-Emulsion-5L/dp/B06XPMGS51",
+        amazonUrl: "https://amzn.to/42yJPRi",
         features: [
             "Estate emulsion finish",
             "5 litre capacity",
@@ -631,7 +631,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Water-Based (10 litre)",
         brand: "TIKKURILA",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/TIKKURILA-Super-White-Excellent-Water-Based/dp/B0B5GWV758",
+        amazonUrl: "https://amzn.to/42Sx8kz",
         features: [
             "Ultra-white finish",
             "10 litre capacity",
@@ -645,7 +645,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "2.5 Litre",
         brand: "Farrow & Ball",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Farrow-Ball-Modern-Emulsion-Litres/dp/B00CTMRUOQ",
+        amazonUrl: "https://amzn.to/42zrnb3",
         features: [
             "Modern emulsion",
             "2.5 litre capacity",
@@ -659,7 +659,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "1 Litre",
         brand: "TIKKURILA",
         category: "Paint Supplies",
-        amazonUrl: "https://www.amazon.co.uk/TIKKURILA-Presto-Renovation-Filler-Litre/dp/B08MTNYGQX",
+        amazonUrl: "https://amzn.to/4gmBtPZ",
         features: [
             "Multi-surface filler",
             "1 litre capacity",
@@ -673,7 +673,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Windows & Furniture Paint (1 litre)",
         brand: "TIKKURILA",
         category: "Furniture Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Miranol-Ultra-Windows-Furniture/dp/B0B29HS16Q",
+        amazonUrl: "https://amzn.to/4giqqXY",
         features: [
             "High-gloss finish",
             "UV-resistant",
@@ -687,7 +687,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Derivatives (1 litre)",
         brand: "TIKKURILA",
         category: "Floor Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Supi-Floor-Oil-Derivatives/dp/B09P7XMKW6",
+        amazonUrl: "https://amzn.to/40RnX2g",
         features: [
             "Floor protection oil",
             "1 litre capacity",
@@ -701,7 +701,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "5 Litre",
         brand: "TIKKURILA",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Vinyl-Matt-Performance-Emulsion/dp/B0B29MY4CY",
+        amazonUrl: "https://amzn.to/40PY0A6",
         features: [
             "Vinyl matt emulsion",
             "5 litre capacity",
@@ -715,7 +715,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Furniture Paint (1 litre)",
         brand: "TIKKURILA",
         category: "Furniture Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Kiva-10-Lacquer-Furniture/dp/B0B1F2VWX6",
+        amazonUrl: "https://amzn.to/4jNiD7A",
         features: [
             "Lacquer finish",
             "1 litre capacity",
@@ -729,7 +729,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Absorbent Ceilings (5 litre)",
         brand: "TIKKURILA",
         category: "Primer",
-        amazonUrl: "https://www.amazon.co.uk/TIKKURILA-Optiva-Primer-Absorbent-Ceilings/dp/B0B52D632R",
+        amazonUrl: "https://amzn.to/3EqyJ6C",
         features: [
             "Primer for ceilings",
             "5 litre capacity",
@@ -743,7 +743,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Water-Based (750 ml)",
         brand: "TIKKURILA",
         category: "Furniture Paint",
-        amazonUrl: "https://www.amazon.co.uk/Tikkurila-Helmi-Performance-Furniture-Water-Based/dp/B0B15KFLJW",
+        amazonUrl: "https://amzn.to/413RR3z",
         features: [
             "Water-based formula",
             "750 ml capacity",
@@ -757,7 +757,7 @@ const PAINT_PRODUCTS: Product[] = [
         subtitle: "Pure Brilliant White (5 litre)",
         brand: "Dulux",
         category: "Interior Paint",
-        amazonUrl: "https://www.amazon.co.uk/Dulux-Trade-Vinyl-Brilliant-White/dp/B007ZU77PE",
+        amazonUrl: "https://amzn.to/40WOVpm",
         features: [
             "Vinyl matt finish",
             "Trade quality",
@@ -852,7 +852,7 @@ export default function Dashboard() {
             <header className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-gray-900">Paint Price Tracker</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">Decorating Deals</h1>
                         <button
                             onClick={handleSignOut}
                             className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
