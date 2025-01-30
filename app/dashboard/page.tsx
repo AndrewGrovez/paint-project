@@ -916,7 +916,7 @@ export default function Dashboard() {
                                     </span>
                                 </div>
                                 
-                                <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-lg bg-gray-100 mb-4">
+                                <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-lg bg-white mb-4">
                                     <img
                                         src={product.imageUrl || '/placeholder.jpg'}
                                         alt={product.title}
