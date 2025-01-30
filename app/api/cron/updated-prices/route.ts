@@ -1,8 +1,7 @@
-// app/api/cron/update-prices/route.ts
+// app/api/cron/updated-prices/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Define interfaces
 interface PriceData {
     currentPrice: number;
     title: string;
@@ -13,10 +12,6 @@ interface PriceData {
 
 interface Prices {
     [productId: string]: PriceData;
-}
-
-interface LastPriceRecord {
-    price: number;
 }
 
 const supabase = createClient(
@@ -34,52 +29,63 @@ async function logPriceUpdate(success: boolean, productsUpdated: number, details
         });
 }
 
+async function processPrice(productId: string, priceData: PriceData) {
+    // Get last price and update both tables in parallel
+    const [lastPriceResponse, historyInsertResponse] = await Promise.all([
+        supabase
+            .from('price_history')
+            .select('price')
+            .eq('product_id', productId)
+            .order('captured_at', { ascending: false })
+            .limit(1)
+            .single(),
+        supabase
+            .from('price_history')
+            .insert({
+                product_id: productId,
+                price: priceData.currentPrice,
+                title: priceData.title,
+                image_url: priceData.imageUrl
+            })
+    ]);
+
+    const lastPrice = lastPriceResponse.data?.price;
+
+    // Update product
+    await supabase
+        .from('products')
+        .update({ 
+            current_price: priceData.currentPrice,
+            last_price: lastPrice || priceData.currentPrice,
+            last_updated: new Date().toISOString()
+        })
+        .eq('id', productId);
+}
+
 export async function GET() {
     try {
-        // 1. Fetch latest prices from your Amazon API endpoint
+        console.log('Starting price update process...');
+        
         const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/prices`);
         if (!response.ok) {
-            throw new Error('Failed to fetch prices');
+            throw new Error(`Failed to fetch prices: ${response.statusText}`);
         }
-        
+
         const { prices }: { prices: Prices } = await response.json();
-
-        // 2. Store each price in price_history and update products
-        for (const [productId, priceData] of Object.entries(prices)) {
-            // Get the last recorded price
-            const { data: lastPriceRecord } = await supabase
-                .from('price_history')
-                .select('price')
-                .eq('product_id', productId)
-                .order('captured_at', { ascending: false })
-                .limit(1)
-                .single();
-
-            const lastPrice = (lastPriceRecord as LastPriceRecord)?.price;
-            const currentPrice = priceData.currentPrice;
-
-            // Record new price in history
-            await supabase
-                .from('price_history')
-                .insert({
-                    product_id: productId,
-                    price: currentPrice,
-                    title: priceData.title,
-                    image_url: priceData.imageUrl
-                });
-
-            // Update the product's current price
-            await supabase
-                .from('products')
-                .update({ 
-                    current_price: currentPrice,
-                    last_price: lastPrice || currentPrice,
-                    last_updated: new Date().toISOString()
-                })
-                .eq('id', productId);
+        
+        // Process prices in parallel, but limit concurrency to 3 at a time
+        const batchSize = 3;
+        const priceEntries = Object.entries(prices);
+        
+        for (let i = 0; i < priceEntries.length; i += batchSize) {
+            const batch = priceEntries.slice(i, i + batchSize);
+            await Promise.all(
+                batch.map(([productId, priceData]) => 
+                    processPrice(productId, priceData)
+                )
+            );
         }
 
-        // Log successful update
         await logPriceUpdate(true, Object.keys(prices).length, 'Successfully updated prices');
 
         return NextResponse.json({ 
@@ -87,10 +93,9 @@ export async function GET() {
             message: `Updated prices for ${Object.keys(prices).length} products`
         });
     } catch (error) {
-        // Log failed update
+        console.error('Error in cron job:', error);
         await logPriceUpdate(false, 0, error instanceof Error ? error.message : 'Unknown error');
 
-        console.error('Error in cron job:', error);
         return NextResponse.json(
             { error: 'Failed to run price updates' },
             { status: 500 }
