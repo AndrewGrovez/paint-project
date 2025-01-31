@@ -1,3 +1,4 @@
+// app/api/prices/route.ts
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -127,34 +128,48 @@ async function getProductPrices(asins: string[]) {
         return response.json();
     }
 
-    // Process ASINs in batches of 10
-    const batchSize = 10;
+    // Process ASINs in batches of 20
+    const batchSize = 20;
     const allResults: AmazonResponse = {
         ItemsResult: {
             Items: []
         }
     };
 
+    const startTime = Date.now();
+    
     for (let i = 0; i < asins.length; i += batchSize) {
         const batchAsins = asins.slice(i, i + batchSize);
-        console.log(`Processing batch ${i/batchSize + 1}:`, batchAsins);
+        const batchNumber = Math.floor(i/batchSize) + 1;
+        const totalBatches = Math.ceil(asins.length/batchSize);
+        
+        console.log(`Processing batch ${batchNumber}/${totalBatches}:`, batchAsins);
         
         try {
+            const batchStart = Date.now();
             const batchResult = await processBatch(batchAsins);
+            const batchDuration = Date.now() - batchStart;
+            
+            console.log(`Batch ${batchNumber} completed in ${batchDuration}ms`);
+
             if (batchResult.ItemsResult?.Items) {
                 allResults.ItemsResult.Items = [
                     ...allResults.ItemsResult.Items,
                     ...batchResult.ItemsResult.Items
                 ];
             }
-            // Add a small delay between batches
+            
+            // Reduced delay between batches
             if (i + batchSize < asins.length) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
         } catch (error) {
-            console.error(`Error processing batch ${i/batchSize + 1}:`, error);
+            console.error(`Error processing batch ${batchNumber}/${totalBatches}:`, error);
         }
     }
+
+    const totalDuration = Date.now() - startTime;
+    console.log(`Total processing time: ${totalDuration}ms`);
 
     return allResults;
 }
