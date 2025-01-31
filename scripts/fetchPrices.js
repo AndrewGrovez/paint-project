@@ -196,52 +196,56 @@ async function getProductPrices(asins) {
 
 // ---- 8. Update Supabase with the prices ----
 async function updatePrices(prices) {
-  for (const [productId, priceData] of Object.entries(prices)) {
-    const { currentPrice, title, imageUrl } = priceData;
-
-    // 8a. Fetch last price
-    const { data: lastPriceRecord, error: selectError } = await supabase
-      .from('price_history')
-      .select('price')
-      .eq('product_id', productId)
-      .order('captured_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (selectError) {
-      console.error(`Could not select last price for ${productId}:`, selectError);
-      continue;
-    }
-    const lastPrice = lastPriceRecord?.price;
-
-    // 8b. Insert new history record
-    const { error: insertError } = await supabase.from('price_history').insert({
-      product_id: productId,
-      price: currentPrice,
-      title,
-      image_url: imageUrl
-    });
-    if (insertError) {
-      console.error(`Could not insert history for ${productId}:`, insertError);
-      continue;
-    }
-
-    // 8c. Update product record
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({
-        current_price: currentPrice,
-        last_price: lastPrice ?? currentPrice,
-        last_updated: new Date().toISOString()
-      })
-      .eq('id', productId);
-
-    if (updateError) {
-      console.error(`Could not update product for ${productId}:`, updateError);
-      continue;
+    for (const [productId, priceData] of Object.entries(prices)) {
+      // We only need currentPrice from the priceData
+      const { currentPrice } = priceData;
+  
+      // 8a. Fetch last price (gracefully handle no rows)
+      const { data: lastPriceRecord, error: selectError } = await supabase
+        .from('price_history')
+        .select('price')
+        .eq('product_id', productId)
+        .order('captured_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(); // won't error if 0 rows
+  
+      if (selectError) {
+        console.error(`Could not select last price for ${productId}:`, selectError);
+        continue;
+      }
+      const lastPrice = lastPriceRecord?.price; // may be undefined if no rows
+  
+      // 8b. Insert new history record (no title/image_url)
+      const { error: insertError } = await supabase
+        .from('price_history')
+        .insert({
+          product_id: productId,
+          price: currentPrice
+          // "captured_at" is presumably auto-populated by default
+        });
+  
+      if (insertError) {
+        console.error(`Could not insert history for ${productId}:`, insertError);
+        continue;
+      }
+  
+      // 8c. Update product record
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          current_price: currentPrice,
+          last_price: lastPrice ?? currentPrice,
+          last_updated: new Date().toISOString()
+        })
+        .eq('id', productId);
+  
+      if (updateError) {
+        console.error(`Could not update product for ${productId}:`, updateError);
+        continue;
+      }
     }
   }
-}
+  
 
 // ---- 9. Main function: fetch from Amazon, then store in Supabase ----
 async function main() {
