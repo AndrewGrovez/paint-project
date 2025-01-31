@@ -67,7 +67,7 @@ const productIds = [
     'B07L8LX6FL'
 ];
 
-// ---- 5. Utility for signing Amazon requests (same logic as your Next.js route) ----
+// ---- 5. Utility for signing Amazon requests ----
 function sign(key, msg) {
   return crypto.createHmac('sha256', key).update(msg).digest();
 }
@@ -168,7 +168,6 @@ async function getProductPrices(asins) {
   const batchSize = 10;
   const concurrency = 3; // # of batches in parallel
 
-  // Break up ASINs into groups of 10
   const batches = [];
   for (let i = 0; i < asins.length; i += batchSize) {
     batches.push(asins.slice(i, i + batchSize));
@@ -178,12 +177,9 @@ async function getProductPrices(asins) {
     ItemsResult: { Items: [] }
   };
 
-  // Process the batch array in slices of `concurrency`
   for (let i = 0; i < batches.length; i += concurrency) {
     const batchSlice = batches.slice(i, i + concurrency);
-    // Each slice is processed in parallel
     const results = await Promise.all(batchSlice.map((b) => processBatch(b)));
-    // Merge results
     for (const r of results) {
       if (r.ItemsResult?.Items) {
         allResults.ItemsResult.Items.push(...r.ItemsResult.Items);
@@ -194,91 +190,136 @@ async function getProductPrices(asins) {
   return allResults;
 }
 
-// ---- 8. Update Supabase with the prices ----
-async function updatePrices(prices) {
-    for (const [productId, priceData] of Object.entries(prices)) {
-      // We only need currentPrice from the priceData
-      const { currentPrice } = priceData;
-  
-      // 8a. Fetch last price (gracefully handle no rows)
-      const { data: lastPriceRecord, error: selectError } = await supabase
-        .from('price_history')
-        .select('price')
-        .eq('product_id', productId)
-        .order('captured_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(); // won't error if 0 rows
-  
-      if (selectError) {
-        console.error(`Could not select last price for ${productId}:`, selectError);
-        continue;
-      }
-      const lastPrice = lastPriceRecord?.price; // may be undefined if no rows
-  
-      // 8b. Insert new history record (no title/image_url)
-      const { error: insertError } = await supabase
-        .from('price_history')
-        .insert({
-          product_id: productId,
-          price: currentPrice
-          // "captured_at" is presumably auto-populated by default
-        });
-  
-      if (insertError) {
-        console.error(`Could not insert history for ${productId}:`, insertError);
-        continue;
-      }
-  
-      // 8c. Update product record
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({
-          current_price: currentPrice,
-          last_price: lastPrice ?? currentPrice,
-          last_updated: new Date().toISOString()
-        })
-        .eq('id', productId);
-  
-      if (updateError) {
-        console.error(`Could not update product for ${productId}:`, updateError);
-        continue;
-      }
+// ---- 8. Create price alerts ----
+async function createPriceAlert(productId, oldPrice, newPrice, productTitle) {
+    try {
+        // Get all users tracking this product
+        const { data: trackingUsers, error: trackingError } = await supabase
+            .from('user_product_tracking')
+            .select('user_id, price_threshold')
+            .eq('product_id', productId);
+
+        if (trackingError) {
+            console.error('Error fetching tracking users:', trackingError);
+            return;
+        }
+
+        if (trackingUsers && trackingUsers.length > 0 && newPrice < oldPrice) {
+            const alerts = trackingUsers.map(({ user_id, price_threshold }) => ({
+                user_id,
+                product_id: productId,
+                old_price: oldPrice,
+                new_price: newPrice,
+                threshold_triggered: price_threshold ? newPrice <= price_threshold : false,
+                price_drop_percentage: ((oldPrice - newPrice) / oldPrice) * 100,
+                created_at: new Date().toISOString(),
+                product_title: productTitle
+            }));
+
+            const { error: insertError } = await supabase
+                .from('price_alerts')
+                .insert(alerts);
+
+            if (insertError) {
+                console.error('Error creating price alerts:', insertError);
+                return;
+            }
+
+            console.log(`Created ${alerts.length} alerts for product ${productId} (${productTitle})`);
+            console.log(`Price dropped from £${oldPrice} to £${newPrice}`);
+        }
+    } catch (error) {
+        console.error('Error in createPriceAlert:', error);
     }
-  }
-  
-
-// ---- 9. Main function: fetch from Amazon, then store in Supabase ----
-async function main() {
-  console.log('Starting daily price fetch...');
-
-  // 9a. Fetch from Amazon
-  const data = await getProductPrices(productIds);
-
-  // 9b. Build the `prices` object
-  const prices = {};
-  if (data.ItemsResult?.Items) {
-    for (const item of data.ItemsResult.Items) {
-      const listing = item.Offers?.Listings?.[0];
-      if (listing) {
-        prices[item.ASIN] = {
-          currentPrice: listing.Price?.Amount || 0,
-          title: item.ItemInfo?.Title?.DisplayValue || '',
-          imageUrl: item.Images?.Primary?.Medium?.URL || ''
-        };
-      }
-    }
-  }
-
-  console.log(`Got ${Object.keys(prices).length} product prices from Amazon.`);
-
-  // 9c. Update Supabase
-  await updatePrices(prices);
-
-  console.log('Successfully updated prices in Supabase.');
 }
 
-// ---- 10. Execute main, catch errors ----
+// ---- 9. Update Supabase with the prices ----
+async function updatePrices(prices) {
+    for (const [productId, priceData] of Object.entries(prices)) {
+        const { currentPrice, title } = priceData;
+
+        // Fetch last price
+        const { data: lastPriceRecord, error: selectError } = await supabase
+            .from('price_history')
+            .select('price')
+            .eq('product_id', productId)
+            .order('captured_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (selectError) {
+            console.error(`Could not select last price for ${productId}:`, selectError);
+            continue;
+        }
+        const lastPrice = lastPriceRecord?.price;
+
+        // Insert new history record
+        const { error: insertError } = await supabase
+            .from('price_history')
+            .insert({
+                product_id: productId,
+                price: currentPrice
+            });
+
+        if (insertError) {
+            console.error(`Could not insert history for ${productId}:`, insertError);
+            continue;
+        }
+
+        // Update product record
+        const { error: updateError } = await supabase
+            .from('products')
+            .update({
+                current_price: currentPrice,
+                last_price: lastPrice ?? currentPrice,
+                last_updated: new Date().toISOString()
+            })
+            .eq('id', productId);
+
+        if (updateError) {
+            console.error(`Could not update product for ${productId}:`, updateError);
+            continue;
+        }
+
+        // Create price alerts if price has dropped
+        if (lastPrice && currentPrice < lastPrice) {
+            await createPriceAlert(productId, lastPrice, currentPrice, title);
+        }
+    }
+}
+
+// ---- 10. Main function: fetch from Amazon, then store in Supabase ----
+async function main() {
+    console.log('Starting daily price fetch...');
+
+    // Fetch from Amazon
+    const data = await getProductPrices(productIds);
+
+    // Build the prices object
+    const prices = {};
+    if (data.ItemsResult?.Items) {
+        for (const item of data.ItemsResult.Items) {
+            const listing = item.Offers?.Listings?.[0];
+            if (listing) {
+                prices[item.ASIN] = {
+                    currentPrice: listing.Price?.Amount || 0,
+                    title: item.ItemInfo?.Title?.DisplayValue || '',
+                    imageUrl: item.Images?.Primary?.Medium?.URL || ''
+                };
+            }
+        }
+    }
+
+    console.log(`Got ${Object.keys(prices).length} product prices from Amazon.`);
+
+    // Update Supabase and create alerts
+    await updatePrices(prices);
+
+    console.log('Successfully updated prices in Supabase and created alerts where needed.');
+}
+
+// ---- 11. Execute main, catch errors ----
 main().catch((err) => {
-  console.error('Error in daily price script:', err);
-  process.exit(1);
+    console.error('Error in daily price script:', err);
+    process.exit(1);
 });
