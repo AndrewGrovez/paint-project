@@ -1,4 +1,3 @@
-// app/api/prices/route.ts
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -128,8 +127,8 @@ async function getProductPrices(asins: string[]) {
         return response.json();
     }
 
-    // Changed from 10 to 20
-    const batchSize = 20;
+    // Process ASINs in batches of 10
+    const batchSize = 10;
     const allResults: AmazonResponse = {
         ItemsResult: {
             Items: []
