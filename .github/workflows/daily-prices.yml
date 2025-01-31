@@ -1,0 +1,38 @@
+name: "Daily Prices"
+
+on:
+  schedule:
+    # Runs every day at 00:00 (midnight) UTC.
+    # Adjust the time as needed (e.g., "0 6 * * *" => 6 AM UTC).
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    # Allows manual triggering from the Actions tab if needed.
+
+jobs:
+  fetch-and-update-prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repo code
+      - uses: actions/checkout@v3
+
+      # 2. Set up Node
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3. Install dependencies (from your root package.json)
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Run your script
+      - name: Fetch & update prices
+        run: node scripts/fetchPrices.js
+        env:
+          # Environment variables are pulled from GitHub's secret store:
+          AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
+          AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
