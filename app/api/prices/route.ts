@@ -1,4 +1,6 @@
 // app/api/prices/route.ts
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -69,9 +71,8 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
         `host:${host}\n` +
         `x-amz-date:${amzdate}\n` +
         'x-amz-target:com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems\n';
-
+    
     const signed_headers = 'content-encoding;content-type;host;x-amz-date;x-amz-target';
-
     const canonical_request = [
         'POST',
         '/paapi5/getitems',
@@ -90,7 +91,7 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
         crypto.createHash('sha256').update(canonical_request).digest('hex')
     ].join('\n');
 
-    let k: Buffer | Uint8Array = Buffer.from(`AWS4${SECRET_KEY}`);
+    let k: Buffer | Uint8Array = Buffer.from(`AWS4${SECRET_KEY}`, 'utf-8');
     k = sign(k, datestamp);
     k = sign(k, region);
     k = sign(k, service);
@@ -98,19 +99,18 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
     const signature = sign(k, string_to_sign).toString('hex');
 
     const authorization_header = [
-        `${algorithm} `,
-        `Credential=${ACCESS_KEY}/${credential_scope}, `,
-        `SignedHeaders=${signed_headers}, `,
+        `${algorithm} Credential=${ACCESS_KEY}/${credential_scope}`,
+        `SignedHeaders=${signed_headers}`,
         `Signature=${signature}`
-    ].join('');
+    ].join(', ');
 
     const headers = {
         'content-encoding': 'amz-1.0',
         'content-type': 'application/json; charset=utf-8',
-        'host': host,
+        host,
         'x-amz-date': amzdate,
         'x-amz-target': 'com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems',
-        'Authorization': authorization_header
+        Authorization: authorization_header
     };
 
     const response = await fetch(`https://${host}/paapi5/getitems`, {
@@ -121,6 +121,12 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
 
     if (!response.ok) {
         const responseText = await response.text();
+        console.error(
+            `Amazon API error for batch [${batchAsins.join(', ')}]:`,
+            response.status,
+            response.statusText,
+            responseText
+        );
         throw new Error(`Amazon API error: ${response.statusText}. Details: ${responseText}`);
     }
 
@@ -128,28 +134,40 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
 }
 
 async function getProductPrices(asins: string[]) {
+    // Batch ASINs in groups of 10
     const batchSize = 10;
-
-    // Split ASINs into chunks of size `batchSize`
     const batches: string[][] = [];
     for (let i = 0; i < asins.length; i += batchSize) {
         batches.push(asins.slice(i, i + batchSize));
     }
 
-    // Process all batches in parallel to reduce total time
-    const results = await Promise.all(batches.map((batch) => processBatch(batch)));
+    // Concurrency limit: how many batches to process in parallel
+    // Lower to avoid "Too Many Requests" from Amazon
+    const concurrency = 3;
 
-    // Combine all batch results
     const allResults: AmazonResponse = {
-        ItemsResult: {
-            Items: []
-        }
+        ItemsResult: { Items: [] }
     };
 
-    for (const result of results) {
-        if (result.ItemsResult?.Items) {
-            allResults.ItemsResult.Items.push(...result.ItemsResult.Items);
+    // Process the batches in slices of `concurrency`
+    for (let i = 0; i < batches.length; i += concurrency) {
+        const batchSlice = batches.slice(i, i + concurrency);
+
+        // Fire each request in parallel, but only up to `concurrency` at a time
+        const sliceResults = await Promise.all(
+            batchSlice.map((batch) => processBatch(batch))
+        );
+
+        // Merge the results
+        for (const result of sliceResults) {
+            if (result.ItemsResult?.Items) {
+                allResults.ItemsResult.Items.push(...result.ItemsResult.Items);
+            }
         }
+
+        // Optional short delay between concurrency groups (e.g. 500ms)
+        // to further reduce risk of throttling. Usually not needed if concurrency is low.
+        // await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     return allResults;
@@ -158,66 +176,65 @@ async function getProductPrices(asins: string[]) {
 export async function GET() {
     try {
         const productIds = [
-            'B08BK4VLC7',  // Original Crown Clean Extreme
-            'B007ZU78JO',  // Original Dulux Diamond Matt
-            'B005QWBAQ0',  // Original Johnstone's Trade
-            'B08FDN5WD5',  // Dulux Trade Vinyl Matt Special Value
-            'B07N2T83TQ',  // Dulux Trade Diamond Satinwood
-            'B08FDP4GHW',  // Dulux Super Matt
-            'B07K6S3QKR',  // Dulux Trade Quick Dry Satinwood
-            'B007ZU77VS',  // Dulux Trade Gloss
-            'B007ZU77EA',  // Dulux Trade Diamond Eggshell
-            'B00EJFDXUQ',  // Dulux Trade Mouldshield
-            'B00EJDZYYQ',  // Dulux Trade Undercoat
-            'B07K496P7Z',  // Dulux Trade Quick Dry Gloss
-            'B00EJF8GEO',  // Dulux Trade Durable Flat Matt
-            'B007ZU77PE',  // Dulux Trade Vinyl Matt
-            'B005QWB23Q',  // Johnstone's Covaplus
-            'B005Q7BC90',  // Johnstone's Vinyl Matt
-            'B005QWAI68',  // Johnstone's Undercoat
-            'B0CP69VSW7',  // Johnstone's Guard Durable
-            'B00OKCWT30',  // Johnstone's Water-Based Satin
-            'B08LTW293L',  // Crown Extreme Inhibiting
-            'B08LTRLF6F',  // Crown Covermatt
-            'B08KWBQY9R',  // Crown Vinyl Matt
-            'B08KW8KN3L',  // Crown Gloss
-            'B07J66BVWF',  // Crown Fastflow Satin
-            'B08DRDMTZ9',  // Crown Fastflow Dual
-            'B0D2Y2PBJ4',  // Crown Fastflow Primer
-            'B00CITDGOI',  // Crown Acrylic Eggshell
-            'B08LTQCVL1',  // Crown All-Purpose Primer
-            'B08KW9JWLX',  // Crown Eggshell
-            'B08LTVDK6N',  // Crown Steracryl
-            'B08W2FN211',  // WRX Satinwood 5L
-            'B08W264522',  // WRX Satinwood 2.5L
-            'B0CK7BQQJB',  // WRX Gloss
-            'B091273N26',  // Eggshell High Traffic
-            'B077B38Q86',  // TIKKURILA Sauna Wax
-            'B08W1PFSS2',  // Ceiling Paint
-            'B0B152GYKK',  // TIKKURILA Helmi 1L
-            'B06XPMGS51',  // Farrow & Ball Estate
-            'B0B5GWV758',  // TIKKURILA Super White
-            'B00CTMRUOQ',  // Farrow & Ball Modern
-            'B08MTNYGQX',  // TIKKURILA Presto Filler
-            'B0B29HS16Q',  // TIKKURILA Miranol
-            'B09P7XMKW6',  // TIKKURILA Supi Floor
-            'B0B29MY4CY',  // TIKKURILA Vinyl Matt
-            'B0B1F2VWX6',  // TIKKURILA Kiva Lacquer
-            'B0B52D632R',  // TIKKURILA Optiva Primer
-            'B0B15KFLJW',  // TIKKURILA Helmi 750ml
-            'B0CP6BZQ22',  // Johnstone's Jonmat Premium
-            'B005QWB7XQ',  // Johnstone's Acrylic Eggshell
-            'B08PMCPR4B',  // Johnstone's Guard Brilliant
-            'B0CPJD1WCF',  // Johnstone's Water-Based Gloss
-            'B098JTHMYY',  // Johnstone's Perfect Matt
-            'B07L8LX6FL'   // Johnstone's Stain Away
+            'B08BK4VLC7',
+            'B007ZU78JO',
+            'B005QWBAQ0',
+            'B08FDN5WD5',
+            'B07N2T83TQ',
+            'B08FDP4GHW',
+            'B07K6S3QKR',
+            'B007ZU77VS',
+            'B007ZU77EA',
+            'B00EJFDXUQ',
+            'B00EJDZYYQ',
+            'B07K496P7Z',
+            'B00EJF8GEO',
+            'B007ZU77PE',
+            'B005QWB23Q',
+            'B005Q7BC90',
+            'B005QWAI68',
+            'B0CP69VSW7',
+            'B00OKCWT30',
+            'B08LTW293L',
+            'B08LTRLF6F',
+            'B08KWBQY9R',
+            'B08KW8KN3L',
+            'B07J66BVWF',
+            'B08DRDMTZ9',
+            'B0D2Y2PBJ4',
+            'B00CITDGOI',
+            'B08LTQCVL1',
+            'B08KW9JWLX',
+            'B08LTVDK6N',
+            'B08W2FN211',
+            'B08W264522',
+            'B0CK7BQQJB',
+            'B091273N26',
+            'B077B38Q86',
+            'B08W1PFSS2',
+            'B0B152GYKK',
+            'B06XPMGS51',
+            'B0B5GWV758',
+            'B00CTMRUOQ',
+            'B08MTNYGQX',
+            'B0B29HS16Q',
+            'B09P7XMKW6',
+            'B0B29MY4CY',
+            'B0B1F2VWX6',
+            'B0B52D632R',
+            'B0B15KFLJW',
+            'B0CP6BZQ22',
+            'B005QWB7XQ',
+            'B08PMCPR4B',
+            'B0CPJD1WCF',
+            'B098JTHMYY',
+            'B07L8LX6FL'
         ];
 
         console.log('Starting price fetch for products...');
-
         const data = await getProductPrices(productIds);
 
-        // Build a record of prices
+        // Construct final price object
         const prices: Record<string, {
             currentPrice: number;
             previousPrice: number;
