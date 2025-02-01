@@ -196,7 +196,6 @@ export async function GET() {
             'B0CP69VSW7',
             'B00OKCWT30',
             'B08LTW293L',
-            'B08LTRLF6F',
             'B08KWBQY9R',
             'B08KW8KN3L',
             'B07J66BVWF',
