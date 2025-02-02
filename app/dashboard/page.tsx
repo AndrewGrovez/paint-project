@@ -806,51 +806,45 @@ export default function Dashboard() {
      */
     const fetchPrices = async () => {
         try {
-            setIsLoadingPrices(true)
-
-            // 1. Fetch pricing from Supabase
-            const { data: supabaseData, error: supabaseError } = await supabase
-                .from('products')
-                .select('id, current_price, last_price, last_updated')
-
-            if (supabaseError) {
-                throw supabaseError
-            }
-
-            // 2. Fetch images (and fallback titles) from Amazon
-            const response = await fetch('/api/prices')
-            if (!response.ok) {
-                throw new Error('Failed to fetch from /api/prices')
-            }
-            const amazonData = await response.json()
-
-            /**
-             * 3. Merge both sets of data:
-             *    - Use Supabase for price info (current_price & last_price).
-             *    - Use Amazon for the imageUrl and optional "apiTitle".
-             */
-            setProducts(products.map(product => {
-                // Find matching product in Supabase
-                const sbItem = supabaseData?.find(item => item.id === product.id)
-                // Find matching product in Amazon response
-                const apiItem = amazonData.prices?.[product.id]
-
-                return {
-                    ...product,
-                    currentPrice: sbItem?.current_price ?? product.currentPrice,
-                    previousPrice: sbItem?.last_price ?? product.previousPrice,
-                    lastUpdated: sbItem?.last_updated ?? product.lastUpdated,
-                    imageUrl: apiItem?.imageUrl || product.imageUrl,
-                    apiTitle: apiItem?.title || product.title
-                }
-            }))
-
+          setIsLoadingPrices(true)
+      
+          // 1. Fetch pricing info from Supabase
+          const { data: supabaseData, error: supabaseError } = await supabase
+            .from('products')
+            .select('id, current_price, last_price, last_updated')
+          if (supabaseError) {
+            throw supabaseError
+          }
+      
+          // 2. Fetch image and title info from Amazon API
+          const response = await fetch('/api/prices')
+          if (!response.ok) {
+            throw new Error('Failed to fetch from /api/prices')
+          }
+          const amazonData = await response.json()
+      
+          // 3. Merge both sets of data using functional update for state
+          setProducts(prevProducts =>
+            prevProducts.map(product => {
+              const sbItem = supabaseData?.find(item => item.id === product.id)
+              const apiItem = amazonData.prices?.[product.id]
+              return {
+                ...product,
+                currentPrice: sbItem?.current_price ?? product.currentPrice,
+                previousPrice: sbItem?.last_price ?? product.previousPrice,
+                lastUpdated: sbItem?.last_updated ?? product.lastUpdated,
+                imageUrl: apiItem?.imageUrl || product.imageUrl,
+                apiTitle: apiItem?.title || product.title,
+              }
+            })
+          )
         } catch (error) {
-            console.error('Failed to fetch prices:', error)
+          console.error('Failed to fetch prices:', error)
         } finally {
-            setIsLoadingPrices(false)
+          setIsLoadingPrices(false)
         }
-    }
+      }
+      
 
     const handleTrackProduct = async (productId: string) => {
         try {
