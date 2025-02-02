@@ -745,7 +745,7 @@ const PAINT_PRODUCTS: Product[] = [
         category: "Furniture Paint",
         amazonUrl: "https://amzn.to/413RR3z",
         features: [
-            "Water-based formula",
+            "Water based formula",
             "750 ml capacity",
             "Quick-drying",
             "Scrubbable"
