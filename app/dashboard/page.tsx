@@ -775,17 +775,20 @@ export default function Dashboard() {
     const { trackedProducts, isLoading: isLoadingTracking, trackProduct } = useProductTracking()
     const router = useRouter()
     
+    // Create Supabase client
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
+    // Filter logic for brand and size
     const filteredProducts = products.filter(product => {
         const brandMatch = selectedBrand ? product.brand === selectedBrand : true
         const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
         return brandMatch && sizeMatch
     })
 
+    // Unique lists for brand & size dropdown filters
     const brands = Array.from(new Set(products.map(p => p.brand)))
     const sizes = Array.from(new Set(products.map(p => {
         const sizeMatch = p.subtitle.match(/\((\d+\.?\d*)\s*litre\)/i)
@@ -796,22 +799,52 @@ export default function Dashboard() {
         fetchPrices()
     }, [])
 
+    /**
+     * Fetch the current and last price from Supabase,
+     * then fetch the image (and optional title) from Amazon API.
+     * We combine those results and set them into state.
+     */
     const fetchPrices = async () => {
         try {
             setIsLoadingPrices(true)
-            const response = await fetch('/api/prices')
-            const data = await response.json()
-            
-            if (data.prices) {
-                setProducts(products.map(product => ({
-                    ...product,
-                    currentPrice: data.prices[product.id]?.currentPrice,
-                    previousPrice: data.prices[product.id]?.previousPrice,
-                    lastUpdated: data.prices[product.id]?.lastUpdated,
-                    imageUrl: data.prices[product.id]?.imageUrl,
-                    apiTitle: data.prices[product.id]?.title
-                })))
+
+            // 1. Fetch pricing from Supabase
+            const { data: supabaseData, error: supabaseError } = await supabase
+                .from('products')
+                .select('id, current_price, last_price, last_updated')
+
+            if (supabaseError) {
+                throw supabaseError
             }
+
+            // 2. Fetch images (and fallback titles) from Amazon
+            const response = await fetch('/api/prices')
+            if (!response.ok) {
+                throw new Error('Failed to fetch from /api/prices')
+            }
+            const amazonData = await response.json()
+
+            /**
+             * 3. Merge both sets of data:
+             *    - Use Supabase for price info (current_price & last_price).
+             *    - Use Amazon for the imageUrl and optional "apiTitle".
+             */
+            setProducts(products.map(product => {
+                // Find matching product in Supabase
+                const sbItem = supabaseData?.find(item => item.id === product.id)
+                // Find matching product in Amazon response
+                const apiItem = amazonData.prices?.[product.id]
+
+                return {
+                    ...product,
+                    currentPrice: sbItem?.current_price ?? product.currentPrice,
+                    previousPrice: sbItem?.last_price ?? product.previousPrice,
+                    lastUpdated: sbItem?.last_updated ?? product.lastUpdated,
+                    imageUrl: apiItem?.imageUrl || product.imageUrl,
+                    apiTitle: apiItem?.title || product.title
+                }
+            }))
+
         } catch (error) {
             console.error('Failed to fetch prices:', error)
         } finally {
@@ -924,7 +957,9 @@ export default function Dashboard() {
                                     />
                                 </div>
 
-                                <h3 className="text-xl font-semibold mb-1">{product.apiTitle || product.title}</h3>
+                                <h3 className="text-xl font-semibold mb-1">
+                                    {product.apiTitle || product.title}
+                                </h3>
                                 <p className="text-gray-600 mb-4">{product.subtitle}</p>
 
                                 <div className="mb-4 p-4 bg-gray-50 rounded-lg">
