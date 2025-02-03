@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
@@ -24,7 +25,7 @@ export default function TrackedProducts() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // Create the Supabase client
+  // Create Supabase client
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -38,14 +39,16 @@ export default function TrackedProducts() {
     try {
       setIsLoading(true)
       
-      // 1. Get the current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      // Use getSession() to retrieve the current session and user.
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        // If no session exists, push to login.
         router.push('/login')
         return
       }
+      const user = session.user
 
-      // 2. Get tracked product IDs from user_product_tracking table for the current user
+      // Get tracked product IDs from the user_product_tracking table for the current user.
       const { data: trackingData, error: trackingError } = await supabase
         .from('user_product_tracking')
         .select('product_id')
@@ -62,7 +65,7 @@ export default function TrackedProducts() {
         return
       }
 
-      // 3. Query the products table for details of these product IDs
+      // Query the products table for details of these product IDs.
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select(`
@@ -85,7 +88,7 @@ export default function TrackedProducts() {
         throw productsError
       }
 
-      // 4. Map the database columns to our Product type
+      // Map the database columns to our Product type.
       const mappedProducts: Product[] = (productsData || []).map((p: any) => ({
         id: p.id,
         title: p.title,
