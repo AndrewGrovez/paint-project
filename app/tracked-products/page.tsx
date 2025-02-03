@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseClient } from '@/lib/supabaseClient'
 import { toast, Toaster } from 'sonner'
 
 type Product = {
@@ -25,12 +25,6 @@ export default function TrackedProducts() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // Create Supabase client
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   useEffect(() => {
     fetchTrackedProducts()
   }, [])
@@ -40,16 +34,16 @@ export default function TrackedProducts() {
       setIsLoading(true)
       
       // Use getSession() to retrieve the current session and user.
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
       if (sessionError || !session) {
-        // If no session exists, push to login.
+        // If no session exists, redirect to login.
         router.push('/login')
         return
       }
       const user = session.user
 
       // Get tracked product IDs from the user_product_tracking table for the current user.
-      const { data: trackingData, error: trackingError } = await supabase
+      const { data: trackingData, error: trackingError } = await supabaseClient
         .from('user_product_tracking')
         .select('product_id')
         .eq('user_id', user.id)
@@ -66,7 +60,7 @@ export default function TrackedProducts() {
       }
 
       // Query the products table for details of these product IDs.
-      const { data: productsData, error: productsError } = await supabase
+      const { data: productsData, error: productsError } = await supabaseClient
         .from('products')
         .select(`
           id,
@@ -115,7 +109,7 @@ export default function TrackedProducts() {
 
   const handleRemoveTracking = async (productId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('user_product_tracking')
         .delete()
         .eq('product_id', productId)
