@@ -4,7 +4,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function Login() {
+export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -15,32 +15,6 @@ export default function Login() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-
-  const handleSignUp = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
-        },
-      })
-      
-      if (error) {
-        setError(error.message)
-      } else {
-        // Show success message for email verification
-        setError('Please check your email for verification link')
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleSignIn = async () => {
     try {
@@ -69,8 +43,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
         <div>
-          <h2 className="text-3xl font-bold text-center">Price Drop Alert</h2>
-          <p className="mt-2 text-center text-gray-600">Track prices on home decor items</p>
+          <h2 className="text-3xl font-bold text-center">Sign In</h2>
         </div>
         
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
@@ -88,8 +61,9 @@ export default function Login() {
               id="email"
               type="email"
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             />
           </div>
@@ -102,26 +76,21 @@ export default function Login() {
               id="password"
               type="password"
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             />
           </div>
           
-          <div className="flex space-x-4">
+          <div className="flex justify-between items-center">
             <button
+              type="button"
               onClick={handleSignIn}
               disabled={isLoading}
-              className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Loading...' : 'Sign In'}
-            </button>
-            <button
-              onClick={handleSignUp}
-              disabled={isLoading}
-              className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Loading...' : 'Sign Up'}
             </button>
           </div>
         </form>

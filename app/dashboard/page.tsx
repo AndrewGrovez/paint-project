@@ -1,24 +1,26 @@
 'use client'
+
 import PriceAlerts from '@/components/PriceAlerts'
+import DashboardHeader from '@/components/DashboardHeader'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useProductTracking } from '@/hooks/useProductTracking'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { toast, Toaster } from 'sonner'
 
 type Product = {
-    id: string;
-    title: string;
-    subtitle: string;
-    brand: string;
-    category: string;
-    amazonUrl: string;
-    features: string[];
-    currentPrice?: number;
-    previousPrice?: number;
-    lastUpdated?: string;
-    imageUrl?: string;
-    apiTitle?: string;
+  id: string;
+  title: string;
+  subtitle: string;
+  brand: string;
+  category: string;
+  amazonUrl: string;
+  features: string[];
+  currentPrice?: number;
+  previousPrice?: number;
+  lastUpdated?: string;
+  imageUrl?: string;
+  apiTitle?: string;
 }
 
 // Initial product data
@@ -767,273 +769,258 @@ const PAINT_PRODUCTS: Product[] = [
     }
 ];
 
-export default function Dashboard() {
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  
+  export default function Dashboard() {
     const [products, setProducts] = useState<Product[]>(PAINT_PRODUCTS)
     const [isLoadingPrices, setIsLoadingPrices] = useState(true)
     const [selectedBrand, setSelectedBrand] = useState<string>('')
     const [selectedSize, setSelectedSize] = useState<string>('')
     const { trackedProducts, isLoading: isLoadingTracking, trackProduct } = useProductTracking()
     const router = useRouter()
-    
-    // Create Supabase client
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
+  
     // Filter logic for brand and size
     const filteredProducts = products.filter(product => {
-        const brandMatch = selectedBrand ? product.brand === selectedBrand : true
-        const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
-        return brandMatch && sizeMatch
+      const brandMatch = selectedBrand ? product.brand === selectedBrand : true
+      const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
+      return brandMatch && sizeMatch
     })
-
-    // Unique lists for brand & size dropdown filters
+  
+    // Build unique lists for filter dropdowns
     const brands = Array.from(new Set(products.map(p => p.brand)))
     const sizes = Array.from(new Set(products.map(p => {
-        const sizeMatch = p.subtitle.match(/\((\d+\.?\d*)\s*litre\)/i)
-        return sizeMatch ? sizeMatch[1] : null
-    }))).filter(size => size !== null) as string[]
-
+      const match = p.subtitle.match(/\((\d+\.?\d*)\s*litre\)/i)
+      return match ? match[1] : null
+    }))).filter((size): size is string => size !== null)
+  
     useEffect(() => {
-        fetchPrices()
+      fetchPrices()
     }, [])
-
+  
     /**
-     * Fetch the current and last price from Supabase,
-     * then fetch the image (and optional title) from Amazon API.
-     * We combine those results and set them into state.
+     * Fetch pricing info from Supabase and image/title info from the Amazon API,
+     * then merge both sets of data using a functional state update.
      */
     const fetchPrices = async () => {
-        try {
-          setIsLoadingPrices(true)
-      
-          // 1. Fetch pricing info from Supabase
-          const { data: supabaseData, error: supabaseError } = await supabase
-            .from('products')
-            .select('id, current_price, last_price, last_updated')
-          if (supabaseError) {
-            throw supabaseError
-          }
-      
-          // 2. Fetch image and title info from Amazon API
-          const response = await fetch('/api/prices')
-          if (!response.ok) {
-            throw new Error('Failed to fetch from /api/prices')
-          }
-          const amazonData = await response.json()
-      
-          // 3. Merge both sets of data using functional update for state
-          setProducts(prevProducts =>
-            prevProducts.map(product => {
-              const sbItem = supabaseData?.find(item => item.id === product.id)
-              const apiItem = amazonData.prices?.[product.id]
-              return {
-                ...product,
-                currentPrice: sbItem?.current_price ?? product.currentPrice,
-                previousPrice: sbItem?.last_price ?? product.previousPrice,
-                lastUpdated: sbItem?.last_updated ?? product.lastUpdated,
-                imageUrl: apiItem?.imageUrl || product.imageUrl,
-                apiTitle: apiItem?.title || product.title,
-              }
-            })
-          )
-        } catch (error) {
-          console.error('Failed to fetch prices:', error)
-        } finally {
-          setIsLoadingPrices(false)
+      try {
+        setIsLoadingPrices(true)
+        // 1. Fetch pricing info from Supabase
+        const { data: supabaseData, error: supabaseError } = await supabase
+          .from('products')
+          .select('id, current_price, last_price, last_updated')
+        if (supabaseError) {
+          throw supabaseError
         }
+        
+        // 2. Fetch image and title info from Amazon API
+        const response = await fetch('/api/prices')
+        if (!response.ok) {
+          throw new Error('Failed to fetch from /api/prices')
+        }
+        const amazonData = await response.json()
+        
+        // 3. Merge both sets of data
+        setProducts(prevProducts =>
+          prevProducts.map(product => {
+            const sbItem = supabaseData?.find((item: any) => item.id === product.id)
+            const apiItem = amazonData.prices?.[product.id]
+            return {
+              ...product,
+              currentPrice: sbItem?.current_price ?? product.currentPrice,
+              previousPrice: sbItem?.last_price ?? product.previousPrice,
+              lastUpdated: sbItem?.last_updated ?? product.lastUpdated,
+              imageUrl: apiItem?.imageUrl || product.imageUrl,
+              apiTitle: apiItem?.title || product.title,
+            }
+          })
+        )
+      } catch (error) {
+        console.error('Failed to fetch prices:', error)
+      } finally {
+        setIsLoadingPrices(false)
       }
-      
-
+    }
+  
     const handleTrackProduct = async (productId: string) => {
-        try {
-            await trackProduct(productId)
-            toast.success(
-                trackedProducts.has(productId) 
-                    ? 'Product removed from tracking'
-                    : 'Product is now being tracked'
-            )
-        } catch (err) {
-            toast.error('Failed to update tracking')
-        }
+      try {
+        await trackProduct(productId)
+        toast.success(
+          trackedProducts.has(productId)
+            ? 'Product removed from tracking'
+            : 'Product is now being tracked'
+        )
+      } catch (err) {
+        toast.error('Failed to update tracking')
+      }
     }
-
-    const handleSignOut = async () => {
-        await supabase.auth.signOut()
-        router.push('/login')
-    }
-
+  
     const formatPrice = (price?: number) => {
-        return price ? `£${price.toFixed(2)}` : 'Price unavailable'
+      return price ? `£${price.toFixed(2)}` : 'Price unavailable'
     }
-
+  
     const getPriceChange = (current?: number, previous?: number) => {
-        if (!current || !previous) return null
-        return ((current - previous) / previous * 100).toFixed(1)
+      if (!current || !previous) return null
+      return ((current - previous) / previous * 100).toFixed(1)
     }
-
+  
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Toaster />
-            <header className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-gray-900">Decorating Deals</h1>
-                        <button
-                            onClick={handleSignOut}
-                            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                        >
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-4 py-6">
-                <PriceAlerts />
-                
-                <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Filter by Brand
-                        </label>
-                        <select
-                            value={selectedBrand}
-                            onChange={(e) => setSelectedBrand(e.target.value)}
-                            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">All Brands</option>
-                            {brands.map(brand => (
-                                <option key={brand} value={brand}>{brand}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Filter by Size
-                        </label>
-                        <select
-                            value={selectedSize}
-                            onChange={(e) => setSelectedSize(e.target.value)}
-                            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">All Sizes</option>
-                            {sizes.map(size => (
-                                <option key={size} value={size}>{size} Litre</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProducts.map((product) => (
-                        <div
-                            key={product.id}
-                            className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                        >
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                        {product.brand}
-                                    </span>
-                                    <span className="text-sm text-gray-500">
-                                        {product.category}
-                                    </span>
-                                </div>
-                                
-                                <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-lg bg-white mb-4">
-                                    <img
-                                        src={product.imageUrl || '/placeholder.jpg'}
-                                        alt={product.title}
-                                        className="w-full h-48 object-contain"
-                                    />
-                                </div>
-
-                                <h3 className="text-xl font-semibold mb-1">
-                                    {product.apiTitle || product.title}
-                                </h3>
-                                <p className="text-gray-600 mb-4">{product.subtitle}</p>
-
-                                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                                    {isLoadingPrices ? (
-                                        <div className="animate-pulse">
-                                            <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="text-2xl font-bold text-gray-900">
-                                                {formatPrice(product.currentPrice)}
-                                            </div>
-                                            {product.previousPrice && (
-                                                <div className="text-sm mt-1">
-                                                    {getPriceChange(product.currentPrice, product.previousPrice) && (
-                                                        <span className={`font-medium ${
-                                                            Number(getPriceChange(product.currentPrice, product.previousPrice)) < 0 
-                                                            ? 'text-green-600' 
-                                                            : 'text-red-600'
-                                                        }`}>
-                                                            {Number(getPriceChange(product.currentPrice, product.previousPrice)) < 0 ? '↓' : '↑'}
-                                                            {Math.abs(Number(getPriceChange(product.currentPrice, product.previousPrice)))}%
-                                                        </span>
-                                                    )}
-                                                    <span className="text-gray-500 ml-2">
-                                                        Previous: {formatPrice(product.previousPrice)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {product.lastUpdated && (
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Updated: {new Date(product.lastUpdated).toLocaleDateString()}
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <h4 className="font-medium mb-2">Features:</h4>
-                                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                                            {product.features.map((feature, index) => (
-                                                <li key={index}>{feature}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-
-                                    <div className="py-4 border-t border-gray-100">
-                                        <div className="flex flex-col space-y-2">
-                                            <button
-                                                onClick={() => handleTrackProduct(product.id)}
-                                                disabled={isLoadingTracking}
-                                                className={`w-full px-4 py-2 rounded-md transition-colors duration-200 ${
-                                                    trackedProducts.has(product.id)
-                                                        ? 'bg-green-500 text-white hover:bg-green-600'
-                                                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                                                } ${isLoadingTracking ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                {isLoadingTracking ? 'Loading...' : 
-                                                    trackedProducts.has(product.id) ? 'Stop Tracking' : 'Track Price'
-                                                }
-                                            </button>
-                                            <a
-                                                href={product.amazonUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-center px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors duration-200"
-                                            >
-                                                View on Amazon
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+      <div className="min-h-screen bg-gray-50">
+        <Toaster />
+        <header className="bg-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900">Decorating Deals</h1>
+            {/* Replace the old sign-out button with DashboardHeader */}
+            <DashboardHeader />
+          </div>
+        </header>
+  
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          <PriceAlerts />
+          
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filter by Brand
+              </label>
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Brands</option>
+                {brands.map(brand => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
+            </div>
+  
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filter by Size
+              </label>
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Sizes</option>
+                {sizes.map(size => (
+                  <option key={size} value={size}>{size} Litre</option>
+                ))}
+              </select>
+            </div>
+          </div>
+  
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {product.brand}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {product.category}
+                    </span>
+                  </div>
+                  
+                  <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-lg bg-white mb-4">
+                    <img
+                      src={product.imageUrl || '/placeholder.jpg'}
+                      alt={product.title}
+                      className="w-full h-48 object-contain"
+                    />
+                  </div>
+  
+                  <h3 className="text-xl font-semibold mb-1">
+                    {product.apiTitle || product.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4">{product.subtitle}</p>
+  
+                  <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                    {isLoadingPrices ? (
+                      <div className="animate-pulse">
+                        <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {formatPrice(product.currentPrice)}
                         </div>
-                    ))}
+                        {product.previousPrice && (
+                          <div className="text-sm mt-1">
+                            {getPriceChange(product.currentPrice, product.previousPrice) && (
+                              <span className={`font-medium ${
+                                Number(getPriceChange(product.currentPrice, product.previousPrice)) < 0 
+                                  ? 'text-green-600' 
+                                  : 'text-red-600'
+                              }`}>
+                                {Number(getPriceChange(product.currentPrice, product.previousPrice)) < 0 ? '↓' : '↑'}
+                                {Math.abs(Number(getPriceChange(product.currentPrice, product.previousPrice)))}%
+                              </span>
+                            )}
+                            <span className="text-gray-500 ml-2">
+                              Previous: {formatPrice(product.previousPrice)}
+                            </span>
+                          </div>
+                        )}
+                        {product.lastUpdated && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Updated: {new Date(product.lastUpdated).toLocaleDateString()}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Features:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-gray-600">
+                        {product.features.map((feature, index) => (
+                          <li key={index}>{feature}</li>
+                        ))}
+                      </ul>
+                    </div>
+  
+                    <div className="py-4 border-t border-gray-100">
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() => handleTrackProduct(product.id)}
+                          disabled={isLoadingTracking}
+                          className={`w-full px-4 py-2 rounded-md transition-colors duration-200 ${
+                            trackedProducts.has(product.id)
+                              ? 'bg-green-500 text-white hover:bg-green-600'
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          } ${isLoadingTracking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isLoadingTracking ? 'Loading...' : 
+                            trackedProducts.has(product.id) ? 'Stop Tracking' : 'Track Price'
+                          }
+                        </button>
+                        <a
+                          href={product.amazonUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-center px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          View on Amazon
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-            </main>
-        </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
     )
-}
+  }
