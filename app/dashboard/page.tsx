@@ -5,7 +5,7 @@ import DashboardHeader from '@/components/DashboardHeader'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useProductTracking } from '@/hooks/useProductTracking'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseClient } from '@/lib/supabaseClient'
 import { toast, Toaster } from 'sonner'
 
 type Product = {
@@ -769,12 +769,7 @@ const PAINT_PRODUCTS: Product[] = [
     }
 ];
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  
-  export default function Dashboard() {
+export default function Dashboard() {
     const [products, setProducts] = useState<Product[]>(PAINT_PRODUCTS)
     const [isLoadingPrices, setIsLoadingPrices] = useState(true)
     const [selectedBrand, setSelectedBrand] = useState<string>('')
@@ -782,14 +777,14 @@ const supabase = createClient(
     const { trackedProducts, isLoading: isLoadingTracking, trackProduct } = useProductTracking()
     const router = useRouter()
   
-    // Filter logic for brand and size
+    // Filter products based on brand and size selections
     const filteredProducts = products.filter(product => {
       const brandMatch = selectedBrand ? product.brand === selectedBrand : true
       const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
       return brandMatch && sizeMatch
     })
   
-    // Build unique lists for filter dropdowns
+    // Build unique dropdown lists for brands and sizes
     const brands = Array.from(new Set(products.map(p => p.brand)))
     const sizes = Array.from(new Set(products.map(p => {
       const match = p.subtitle.match(/\((\d+\.?\d*)\s*litre\)/i)
@@ -802,27 +797,28 @@ const supabase = createClient(
   
     /**
      * Fetch pricing info from Supabase and image/title info from the Amazon API,
-     * then merge both sets of data using a functional state update.
+     * then merge both sets of data.
      */
     const fetchPrices = async () => {
       try {
         setIsLoadingPrices(true)
-        // 1. Fetch pricing info from Supabase
-        const { data: supabaseData, error: supabaseError } = await supabase
+        
+        // Fetch pricing info from Supabase using the singleton client.
+        const { data: supabaseData, error: supabaseError } = await supabaseClient
           .from('products')
           .select('id, current_price, last_price, last_updated')
         if (supabaseError) {
           throw supabaseError
         }
         
-        // 2. Fetch image and title info from Amazon API
+        // Fetch image and title info from the Amazon API.
         const response = await fetch('/api/prices')
         if (!response.ok) {
           throw new Error('Failed to fetch from /api/prices')
         }
         const amazonData = await response.json()
         
-        // 3. Merge both sets of data
+        // Merge the data into the current product state.
         setProducts(prevProducts =>
           prevProducts.map(product => {
             const sbItem = supabaseData?.find((item: any) => item.id === product.id)
@@ -857,9 +853,7 @@ const supabase = createClient(
       }
     }
   
-    const formatPrice = (price?: number) => {
-      return price ? `£${price.toFixed(2)}` : 'Price unavailable'
-    }
+    const formatPrice = (price?: number) => price ? `£${price.toFixed(2)}` : 'Price unavailable'
   
     const getPriceChange = (current?: number, previous?: number) => {
       if (!current || !previous) return null
@@ -872,7 +866,6 @@ const supabase = createClient(
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">Decorating Deals</h1>
-            {/* Replace the old sign-out button with DashboardHeader */}
             <DashboardHeader />
           </div>
         </header>

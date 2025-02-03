@@ -1,6 +1,6 @@
 'use client'
 
-import { createBrowserClient } from '@supabase/ssr'
+import { supabaseClient } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -11,17 +11,15 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
+  // Use the singleton Supabase client from your lib file.
+  // No need to call createBrowserClient here.
+  
   const handleSignIn = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       })
