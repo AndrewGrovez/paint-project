@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 
+// Define the type for items returned by the Supabase query
+type TrackedProduct = {
+  product_id: string;
+}
+
 export function useProductTracking() {
   const [trackedProducts, setTrackedProducts] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -28,7 +33,8 @@ export function useProductTracking() {
       }
 
       if (data) {
-        setTrackedProducts(new Set(data.map((item: any) => item.product_id)))
+        // Use the TrackedProduct type instead of any
+        setTrackedProducts(new Set(data.map((item: TrackedProduct) => item.product_id)))
       }
     } catch (error) {
       console.error('Error fetching tracked products:', error)

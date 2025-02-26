@@ -1,9 +1,11 @@
-'use client'
+// app/tracked-products/page.tsx
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabaseClient } from '@/lib/supabaseClient'
-import { toast, Toaster } from 'sonner'
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { toast, Toaster } from 'sonner';
 
 type Product = {
   id: string;
@@ -18,48 +20,68 @@ type Product = {
   lastUpdated?: string;
   imageUrl?: string;
   apiTitle?: string;
-}
+};
+
+type TrackedProductData = {
+  product_id: string;
+  price_threshold?: number | null;
+  created_at: string;
+};
+
+type ProductData = {
+  id: string;
+  title: string;
+  subtitle: string;
+  brand: string;
+  category: string;
+  amazon_url: string;
+  features: string[];
+  current_price?: number;
+  last_price?: number;
+  last_updated?: string;
+};
 
 export default function TrackedProducts() {
-  const [trackedProducts, setTrackedProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
+  const [trackedProducts, setTrackedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  useEffect(() => {
-    fetchTrackedProducts()
-  }, [])
-
-  const fetchTrackedProducts = async () => {
+  const fetchTrackedProducts = useCallback(async () => {
     try {
-      setIsLoading(true)
-      
-      // Use getSession() to retrieve the current session and user.
-      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
-      if (sessionError || !session) {
-        // If no session exists, redirect to login.
-        router.push('/login')
-        return
-      }
-      const user = session.user
+      setIsLoading(true);
 
-      // Get tracked product IDs from the user_product_tracking table for the current user.
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError) {
+        console.error('Session fetch error:', sessionError.message);
+        throw new Error(`Failed to fetch session: ${sessionError.message}`);
+      }
+      if (!session) {
+        console.log('No active session, redirecting to login');
+        router.push('/login');
+        return;
+      }
+      const user = session.user;
+      console.log('Logged-in User ID:', user.id);
+
       const { data: trackingData, error: trackingError } = await supabaseClient
         .from('user_product_tracking')
-        .select('product_id')
-        .eq('user_id', user.id)
+        .select('product_id, price_threshold, created_at')
+        .eq('user_id', user.id);
 
       if (trackingError) {
-        throw trackingError
+        console.error('Tracking query error:', trackingError.message, trackingError.hint, trackingError.details);
+        throw new Error(`Failed to fetch tracking data: ${trackingError.message}`);
       }
-
-      const productIds = trackingData?.map((item: any) => item.product_id) || []
-      
-      if (productIds.length === 0) {
-        setTrackedProducts([])
-        return
+      if (!trackingData || trackingData.length === 0) {
+        console.log('No products tracked for user:', user.id);
+        setTrackedProducts([]);
+        return;
       }
+      console.log('Tracking data:', trackingData);
 
-      // Query the products table for details of these product IDs.
+      const productIds = trackingData.map((item: TrackedProductData) => item.product_id);
+      console.log('Product IDs to fetch:', productIds);
+
       const { data: productsData, error: productsError } = await supabaseClient
         .from('products')
         .select(`
@@ -72,61 +94,103 @@ export default function TrackedProducts() {
           features,
           current_price,
           last_price,
-          last_updated,
-          image_url,
-          api_title
+          last_updated
         `)
-        .in('id', productIds)
+        .in('id', productIds);
 
       if (productsError) {
-        throw productsError
+        console.error('Products query error:', productsError.message, productsError.hint, productsError.details);
+        throw new Error(`Failed to fetch products: ${productsError.message}`);
       }
+      if (!productsData || productsData.length === 0) {
+        console.warn('No products found in "products" table for IDs:', productIds);
+        setTrackedProducts([]);
+        return;
+      }
+      console.log('Products data:', productsData);
 
-      // Map the database columns to our Product type.
-      const mappedProducts: Product[] = (productsData || []).map((p: any) => ({
+      const mappedProducts: Product[] = productsData.map((p: ProductData) => ({
         id: p.id,
         title: p.title,
         subtitle: p.subtitle,
         brand: p.brand,
         category: p.category,
         amazonUrl: p.amazon_url,
-        features: p.features,
+        features: p.features || [],
         currentPrice: p.current_price,
         previousPrice: p.last_price,
         lastUpdated: p.last_updated,
-        imageUrl: p.image_url,
-        apiTitle: p.api_title,
-      }))
+        imageUrl: undefined,
+        apiTitle: undefined,
+      }));
 
-      setTrackedProducts(mappedProducts)
+      // Fetch latest prices and images from /api/prices
+      if (productsData.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const idsToFetch = productsData.map(p => p.id); // Keep for future use
+        const response = await fetch('/api/prices');
+        if (!response.ok) {
+          console.error('Failed to fetch prices from API:', await response.text());
+        } else {
+          const { prices } = await response.json();
+          mappedProducts.forEach(product => {
+            const apiData = prices[product.id];
+            if (apiData) {
+              product.imageUrl = apiData.imageUrl;
+              product.apiTitle = apiData.title;
+              product.currentPrice = apiData.currentPrice;
+            }
+          });
+        }
+      }
+
+      console.log('Mapped products with API data:', mappedProducts);
+      setTrackedProducts(mappedProducts);
     } catch (error) {
-      console.error('Failed to fetch tracked products:', error)
-      toast.error('Failed to fetch tracked products')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Failed to fetch tracked products:', error);
+      toast.error(`Failed to fetch tracked products: ${errorMessage}`);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    fetchTrackedProducts();
+  }, [fetchTrackedProducts]);
 
   const handleRemoveTracking = async (productId: string) => {
     try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        console.log('No session, redirecting to login');
+        router.push('/login');
+        return;
+      }
+      const user = session.user;
+
       const { error } = await supabaseClient
         .from('user_product_tracking')
         .delete()
-        .eq('product_id', productId)
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+
       if (error) {
-        throw error
+        console.error('Remove tracking error:', error.message, error.hint, error.details);
+        throw new Error(`Failed to remove tracking: ${error.message}`);
       }
-      toast.success('Product removed from tracking')
-      fetchTrackedProducts()
+      toast.success('Product removed from tracking');
+      fetchTrackedProducts();
     } catch (error) {
-      console.error('Error removing tracking:', error)
-      toast.error('Failed to remove tracking')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error removing tracking:', error);
+      toast.error(`Failed to remove tracking: ${errorMessage}`);
     }
-  }
+  };
 
   const formatPrice = (price?: number) => {
-    return price ? `£${price.toFixed(2)}` : 'Price unavailable'
-  }
+    return price !== undefined && price !== null ? `£${price.toFixed(2)}` : 'Price unavailable';
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -145,12 +209,9 @@ export default function TrackedProducts() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trackedProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-lg shadow p-4"
-              >
+              <div key={product.id} className="bg-white rounded-lg shadow p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold">{product.title}</h2>
+                  <h2 className="text-xl font-bold">{product.apiTitle || product.title}</h2>
                   <button
                     onClick={() => handleRemoveTracking(product.id)}
                     className="text-red-500 text-sm"
@@ -158,11 +219,14 @@ export default function TrackedProducts() {
                     Remove
                   </button>
                 </div>
-                <div className="mb-4">
-                  <img
-                    src={product.imageUrl || '/placeholder.jpg'}
-                    alt={product.title}
-                    className="w-full h-48 object-contain rounded"
+                <div className="mb-4 flex items-center justify-center relative">
+                  <Image
+                    src={product.imageUrl || '/images/placeholder.jpg'}
+                    alt={product.apiTitle || product.title}
+                    width={192}
+                    height={192}
+                    quality={75}
+                    className="object-contain rounded"
                   />
                 </div>
                 <p className="text-gray-600">{product.subtitle}</p>
@@ -170,7 +234,7 @@ export default function TrackedProducts() {
                   <p className="text-2xl font-bold text-gray-900">
                     {formatPrice(product.currentPrice)}
                   </p>
-                  {product.previousPrice && (
+                  {product.previousPrice !== undefined && (
                     <p className="text-sm text-gray-500">
                       Previous: {formatPrice(product.previousPrice)}
                     </p>
@@ -197,5 +261,5 @@ export default function TrackedProducts() {
         )}
       </main>
     </div>
-  )
+  );
 }

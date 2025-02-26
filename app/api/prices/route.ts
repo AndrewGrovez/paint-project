@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { requestQueue } from '@/utils/rateLimiter'; // Adjust path as needed
 
 const ACCESS_KEY = process.env.AMAZON_ACCESS_KEY!;
 const SECRET_KEY = process.env.AMAZON_SECRET_KEY!;
@@ -134,40 +135,29 @@ async function processBatch(batchAsins: string[]): Promise<AmazonResponse> {
 }
 
 async function getProductPrices(asins: string[]) {
-    // Batch ASINs in groups of 10
+    // Batch ASINs in groups of 10 (Amazon API limit)
     const batchSize = 10;
     const batches: string[][] = [];
     for (let i = 0; i < asins.length; i += batchSize) {
         batches.push(asins.slice(i, i + batchSize));
     }
 
-    // Concurrency limit: how many batches to process in parallel
-    // Lower to avoid "Too Many Requests" from Amazon
-    const concurrency = 3;
-
     const allResults: AmazonResponse = {
         ItemsResult: { Items: [] }
     };
 
-    // Process the batches in slices of `concurrency`
-    for (let i = 0; i < batches.length; i += concurrency) {
-        const batchSlice = batches.slice(i, i + concurrency);
+    // Use requestQueue to process each batch sequentially with rate limiting
+    const batchResults = await Promise.all(
+        batches.map(batch =>
+            requestQueue.add(() => processBatch(batch))
+        )
+    );
 
-        // Fire each request in parallel, but only up to `concurrency` at a time
-        const sliceResults = await Promise.all(
-            batchSlice.map((batch) => processBatch(batch))
-        );
-
-        // Merge the results
-        for (const result of sliceResults) {
-            if (result.ItemsResult?.Items) {
-                allResults.ItemsResult.Items.push(...result.ItemsResult.Items);
-            }
+    // Merge results from all batches
+    for (const result of batchResults) {
+        if (result.ItemsResult?.Items) {
+            allResults.ItemsResult.Items.push(...result.ItemsResult.Items);
         }
-
-        // Optional short delay between concurrency groups (e.g. 500ms)
-        // to further reduce risk of throttling. Usually not needed if concurrency is low.
-        // await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     return allResults;
@@ -176,58 +166,17 @@ async function getProductPrices(asins: string[]) {
 export async function GET() {
     try {
         const productIds = [
-            'B08BK4VLC7',
-            'B007ZU78JO',
-            'B005QWBAQ0',
-            'B08FDN5WD5',
-            'B07N2T83TQ',
-            'B08FDP4GHW',
-            'B07K6S3QKR',
-            'B007ZU77VS',
-            'B007ZU77EA',
-            'B00EJFDXUQ',
-            'B00EJDZYYQ',
-            'B07K496P7Z',
-            'B00EJF8GEO',
-            'B007ZU77PE',
-            'B005QWB23Q',
-            'B005Q7BC90',
-            'B005QWAI68',
-            'B0CP69VSW7',
-            'B00OKCWT30',
-            'B08LTW293L',
-            'B08KWBQY9R',
-            'B08KW8KN3L',
-            'B07J66BVWF',
-            'B08DRDMTZ9',
-            'B0D2Y2PBJ4',
-            'B00CITDGOI',
-            'B08LTQCVL1',
-            'B08KW9JWLX',
-            'B08LTVDK6N',
-            'B08W2FN211',
-            'B08W264522',
-            'B0CK7BQQJB',
-            'B091273N26',
-            'B077B38Q86',
-            'B08W1PFSS2',
-            'B0B152GYKK',
-            'B06XPMGS51',
-            'B0B5GWV758',
-            'B00CTMRUOQ',
-            'B08MTNYGQX',
-            'B0B29HS16Q',
-            'B09P7XMKW6',
-            'B0B29MY4CY',
-            'B0B1F2VWX6',
-            'B0B52D632R',
-            'B0B15KFLJW',
-            'B0CP6BZQ22',
-            'B005QWB7XQ',
-            'B08PMCPR4B',
-            'B0CPJD1WCF',
-            'B098JTHMYY',
-            'B07L8LX6FL'
+            'B08BK4VLC7', 'B007ZU78JO', 'B005QWBAQ0', 'B08FDN5WD5', 'B07N2T83TQ',
+            'B08FDP4GHW', 'B07K6S3QKR', 'B007ZU77VS', 'B007ZU77EA', 'B00EJFDXUQ',
+            'B00EJDZYYQ', 'B07K496P7Z', 'B00EJF8GEO', 'B007ZU77PE', 'B005QWB23Q',
+            'B005Q7BC90', 'B005QWAI68', 'B0CP69VSW7', 'B00OKCWT30', 'B08LTW293L',
+            'B08KWBQY9R', 'B08KW8KN3L', 'B07J66BVWF', 'B08DRDMTZ9', 'B0D2Y2PBJ4',
+            'B00CITDGOI', 'B08LTQCVL1', 'B08KW9JWLX', 'B08LTVDK6N', 'B08W2FN211',
+            'B08W264522', 'B0CK7BQQJB', 'B091273N26', 'B077B38Q86', 'B08W1PFSS2',
+            'B0B152GYKK', 'B06XPMGS51', 'B0B5GWV758', 'B00CTMRUOQ', 'B08MTNYGQX',
+            'B0B29HS16Q', 'B09P7XMKW6', 'B0B29MY4CY', 'B0B1F2VWX6', 'B0B52D632R',
+            'B0B15KFLJW', 'B0CP6BZQ22', 'B005QWB7XQ', 'B08PMCPR4B', 'B0CPJD1WCF',
+            'B098JTHMYY', 'B07L8LX6FL'
         ];
 
         console.log('Starting price fetch for products...');
@@ -248,7 +197,7 @@ export async function GET() {
                 if (listing) {
                     prices[item.ASIN] = {
                         currentPrice: listing.Price?.Amount || 0,
-                        previousPrice: listing.Price?.Amount || 0,
+                        previousPrice: listing.Price?.Amount || 0, // Note: This should ideally come from DB
                         lastUpdated: new Date().toISOString(),
                         title: item.ItemInfo?.Title?.DisplayValue || '',
                         imageUrl: item.Images?.Primary?.Medium?.URL || ''

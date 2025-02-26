@@ -1,7 +1,6 @@
 'use client'
 
 import { createBrowserClient } from '@supabase/ssr'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function SignUp() {
@@ -12,7 +11,6 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +18,6 @@ export default function SignUp() {
   )
 
   const handleSignUp = async () => {
-    // Check that the passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
@@ -44,10 +41,9 @@ export default function SignUp() {
       if (error) {
         setError(error.message)
       } else {
-        // Inform the user to check their email for verification.
         setError('Please check your email for a verification link')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
