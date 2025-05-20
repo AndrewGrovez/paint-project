@@ -783,14 +783,12 @@ export default function Dashboard() {
   const [selectedSize, setSelectedSize] = useState<string>('')
   const { trackedProducts, isLoading: isLoadingTracking, trackProduct } = useProductTracking()
 
-  // Filter products based on brand and size selections
   const filteredProducts = products.filter(product => {
     const brandMatch = selectedBrand ? product.brand === selectedBrand : true
     const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
     return brandMatch && sizeMatch
   })
 
-  // Build unique dropdown lists for brands and sizes
   const brands = Array.from(new Set(products.map(p => p.brand)))
   const sizes = Array.from(new Set(products.map(p => {
     const match = p.subtitle.match(/\((\d+\.?\d*)\s*litre\)/i)
@@ -801,10 +799,6 @@ export default function Dashboard() {
     fetchPrices()
   }, [])
 
-  /**
-   * Fetch pricing info from Supabase and image/title info from the Amazon API,
-   * then merge both sets of data.
-   */
   const fetchPrices = async () => {
     try {
       setIsLoadingPrices(true)
@@ -867,8 +861,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <Toaster />
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Decorating Deals</h1>
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <DashboardHeader />
         </div>
       </header>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { toast, Toaster } from 'sonner';
+import DashboardHeader from '@/components/DashboardHeader';
 
 type Product = {
   id: string;
@@ -124,10 +125,7 @@ export default function TrackedProducts() {
         apiTitle: undefined,
       }));
 
-      // Fetch latest prices and images from /api/prices
       if (productsData.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const idsToFetch = productsData.map(p => p.id); // Keep for future use
         const response = await fetch('/api/prices');
         if (!response.ok) {
           console.error('Failed to fetch prices from API:', await response.text());
@@ -196,7 +194,7 @@ export default function TrackedProducts() {
     <div className="min-h-screen bg-gray-50 p-4">
       <Toaster />
       <header className="bg-white shadow p-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">My Tracked Products</h1>
+        <DashboardHeader />
       </header>
       <main className="max-w-7xl mx-auto">
         {isLoading ? (
