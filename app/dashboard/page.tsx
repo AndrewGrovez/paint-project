@@ -785,7 +785,7 @@ export default function Dashboard() {
 
   const filteredProducts = products.filter(product => {
     const brandMatch = selectedBrand ? product.brand === selectedBrand : true
-    const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre`) : true
+    const sizeMatch = selectedSize ? product.subtitle.includes(`(${selectedSize} litre)`) : true
     return brandMatch && sizeMatch
   })
 
